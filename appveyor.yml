@@ -1,0 +1,25 @@
+image: Visual Studio 2015
+
+environment:
+  BASH: C:/cygwin/bin/bash
+
+  matrix:
+    - node_platform: x86
+      dist_platform: 32
+    - node_platform: x64
+      dist_platform: 64
+
+cache:
+  - node_modules
+
+install:
+  - git submodule update --init --recursive
+  - ps: Install-Product node LTS $env:node_platform
+  - npm config set msvs_version 2015
+  - '%BASH% -lc "cd $APPVEYOR_BUILD_FOLDER && yarn"'
+
+build: off
+
+test_script:
+  - '%BASH% -lc "cd $APPVEYOR_BUILD_FOLDER && yarn dist:windows:$dist_platform"'
+  - yarn e2e

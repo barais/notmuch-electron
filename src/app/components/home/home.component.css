@@ -1,0 +1,16 @@
+body .ui-accordion .ui-accordion-header:not(.ui-state-disabled).ui-state-active a {
+  background-color: black;
+  border: 1px solid black;
+  color: #ffffff;
+}
+
+.ui-dropdown    {
+  width:100% !important;
+}
+.ui-dropdown .ui-dropdown-panel {
+  min-width: 100%;
+  width: max-content;
+}
+.ui-fluid p-dropdown {
+  width: 100%;
+}

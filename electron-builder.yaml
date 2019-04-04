@@ -1,0 +1,25 @@
+directories:
+  output: build-artifacts
+  buildResources: build-resources
+  app: dist
+artifactName: ${productName}.${ext}
+win:
+  icon: src/favicon.png
+  target:
+    - portable
+mac:
+  target:
+    - dmg
+dmg:
+  title: ${productName}
+linux:
+  target:
+    - AppImage
+  category : Email
+  maintainer : Olivier Barais
+  description: Email client based on notmuch
+  icon: build/icons/icon.icns
+
+nodeGypRebuild: true
+asar: false
+electronVersion: 4.0.1

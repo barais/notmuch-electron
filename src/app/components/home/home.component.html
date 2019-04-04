@@ -1,0 +1,469 @@
+<p-toast></p-toast>
+<p-confirmDialog [style]="{width: '50vw'}"></p-confirmDialog>
+
+<div class="ui-inputgroup">
+  <div class="ui-md-2">
+    <p-button (click)="display = true" icon="fa fa-chevron-right" label="Show Folders"
+      pTooltip="Select the current folder" tooltipPosition="right"></p-button>
+  </div>
+  <div class="ui-md-2">
+    <div class="ui-inputgroup">
+      <span style="padding:2px 5px;border-radius:10px 10px;"> All threads:</span>
+      <p-inputSwitch (onChange)="handleChangeAllThread($event)" [(ngModel)]="allThread"
+        pTooltip="Include all mails of a thread when showing thread" tooltipPosition="bottom"></p-inputSwitch>
+    </div>
+  </div>
+  <div class="ui-md-5">
+    <div class="ui-fluid">
+      <p-autoComplete class="ui-md-12" placeholder="Query" [(ngModel)]="query" (keydown)="checkEnter($event)"
+        [suggestions]="resultresearch" (completeMethod)="searchquery($event)"
+        pTooltip="query language for notmuch (see notmuch documentation)" tooltipPosition="bottom"></p-autoComplete>
+    </div>
+  </div>
+  <div class="ui-md-1">
+    <button pButton type="button" label="Search" (click)="doQuery()"></button>
+  </div>
+  <div class="ui-md-2">
+    <div class="ui-inputgroup">
+      <span style="padding:2px 5px;border-radius:10px 10px;"> Spam and Trash:</span>
+      <p-inputSwitch (onChange)="handleChangeSpamAndTrash($event)" [(ngModel)]="showSpamTrash"
+        pTooltip="Include deleted and spam messages in search query" tooltipPosition="bottom"></p-inputSwitch>
+    </div>
+  </div>
+
+</div>
+
+
+<p-sidebar [(visible)]="display">
+  <p-tree [value]="filesTree2" selectionMode="single" [(selection)]="selectedFile" (onNodeSelect)="nodeSelect($event)">
+  </p-tree>
+</p-sidebar>
+
+
+<div class="p-col-12" style="padding-top: 0px;" contentStyle="{ 'padding-top': '0px', 'padding-bottom': '0px'}">
+  <p-panel contentStyle="{ 'padding-top': '0px', 'padding-bottom': '0px'}">
+    <p-header style="padding-top: 0px;padding-bottom: 0px;"
+      contentStyle="{ 'padding-top': '0px', 'padding-bottom': '0px'}">
+      <div class="ui-helper-clearfix">
+        <div class="ui-g" style="padding: 0em;border-bottom: 1px solid #d9d9d9">
+          <div class="ui-g-12 ui-md-2" style="text-align:center">
+            <p-splitButton label="all" icon="far fa-check-square" [model]="messageAction" (onClick)="selectAll()">
+            </p-splitButton>
+          </div>
+          <div class="ui-g-12 ui-md-3" style="text-align:center">
+            <p-button icon="pi pi-trash" [disabled]="selectedThreads.length===0" (click)="delete()"
+              pTooltip="Send selected thread(s) to trash" tooltipPosition="bottom"></p-button>
+            <p-button icon="fa fa-archive" [disabled]="selectedThreads.length===0" (click)="archive()"
+              pTooltip="Archive selected thread(s)" tooltipPosition="bottom"></p-button>
+            <p-button icon="fa fa-pastafarianism" [disabled]="selectedThreads.length===0" (click)="spam()"
+              pTooltip="Declare selected thread(s) as spam" tooltipPosition="bottom"></p-button>
+            <p-button label="Mark as read" [disabled]="selectedThreads.length===0" (click)="markAsRead()"
+              pTooltip="Mark selected thread(s) as read" tooltipPosition="bottom"></p-button>
+          </div>
+
+          <div class="ui-g-12 ui-md-3" style="text-align:center">
+            <p-button icon="fa fa-sync" (click)="update()" pTooltip="check new mail in notmuch database"
+              tooltipPosition="bottom"></p-button>
+            <p-splitButton label="Extra" icon="pi pi-file" [disabled]="selectedThreads.length===0" [model]="extras">
+            </p-splitButton>
+          </div>
+          <div class="ui-md-2" style="text-align:center">
+            <input [(ngModel)]="selectmatch" type="text" pInputText placeholder="Select matched"
+              (keydown)="selectMatched($event,selectmatch)" pTooltip="Select threads that match"
+              tooltipPosition="bottom">
+          </div>
+          <div class="ui-g-12 ui-md-2" style="text-align:center">
+            {{fromMessage}}-{{toMessage}} of {{nbThreads}}
+            <!--            <p-button icon="fa fa-chevron-left"></p-button>
+            <p-button icon="fa fa-chevron-right"></p-button>-->
+          </div>
+        </div>
+      </div>
+    </p-header>
+
+    <p-dataView #dv [value]="threads" [paginator]="true" [rows]="50" paginatorPosition="both" filterBy="authors"
+      [sortField]="sortField" [sortOrder]="sortOrder" [lazy]="true" (onLazyLoad)="loadThread($event)"
+      [totalRecords]="nbThreads">
+      <p-header>
+        <div class="ui-helper-clearfix">
+          <div class="ui-g">
+            <div class="ui-g-12 ui-md-4">
+              <!--  <p-dropdown [options]="sortOptions" [(ngModel)]="sortKey" placeholder="Sort By" (onChange)="onSortChange($event)"
+                [style]="{'min-width':'140px'}"></p-dropdown>-->
+            </div>
+            <div class="ui-g-6 ui-md-4 filter-container">
+              <div style="position:relative">
+                <input type="search" pInputText placeholder="Filter by authors"
+                  (keyup)="dv.filter($event.target.value)">
+              </div>
+            </div>
+            <div class="ui-g-6 ui-md-4" style="text-align:right">
+              <button pButton type="button" label="New Message" (click)="newMail()"></button>
+
+              <!--<p-dataViewLayoutOptions></p-dataViewLayoutOptions>-->
+
+            </div>
+          </div>
+        </div>
+      </p-header>
+      <ng-template let-thread pTemplate="listItem">
+        <div class="ui-g" style="padding: 0em;border-bottom: 1px solid #d9d9d9">
+          <div class="ui-g-12 ui-md-1" style="text-align:center">
+            <p-checkbox [(ngModel)]="thread.selected" (onChange)="toggleSelection($event, thread)" binary="true">
+            </p-checkbox>
+          </div>
+          <div class="ui-g-12 ui-md-1" style="text-align:center">
+            <span *ngIf="thread.tags?.includes('flagged') ; else unstar" (click)="markAsUnstarredWithId(thread)"
+              class="ui-rating-icon pi pi-star" ng-reflect-klass="ui-rating-icon" ng-reflect-ng-class="pi pi-star"
+              pTooltip="flagged this thread" tooltipPosition="bottom"></span>
+            <ng-template #unstar>
+              <span (click)="markAsStarWithId(thread)" class="ui-rating-icon pi pi-star-o"
+                ng-reflect-klass="ui-rating-icon" ng-reflect-ng-class="pi pi-star" pTooltip="unflagged this thread"
+                tooltipPosition="bottom"></span>
+            </ng-template>
+            <span>&nbsp;</span>
+            <span *ngIf="thread.tags?.includes('todo') ; else untodo" (click)="markAsUntodoWithId(thread)"
+              class="ui-rating-icon pi pi-calendar-minus" ng-reflect-klass="ui-rating-icon"
+              ng-reflect-ng-class="pi pi-star" pTooltip="Remove todo tag on this thread"
+              tooltipPosition="bottom"></span>
+            <ng-template #untodo>
+              <span (click)="markAsTodoWithId(thread)" class="ui-rating-icon pi pi-calendar-plus"
+                ng-reflect-klass="ui-rating-icon" ng-reflect-ng-class="pi pi-star"
+                pTooltip="Declare this thread as todo" tooltipPosition="bottom"></span>
+            </ng-template>
+            <span>&nbsp;</span>
+            <span (click)="deleteWithId(thread)" class="ui-rating-icon pi pi-trash" ng-reflect-klass="ui-rating-icon"
+              ng-reflect-ng-class="pi pi-star" pTooltip="Delete this thread" tooltipPosition="bottom"></span>
+          </div>
+          <div class="ui-g-12 ui-md-1" [style.font-weight]="isRead(thread)" [style.color]="getColorThread(thread)">
+            {{thread.matched}}/{{thread.total}}
+          </div>
+          <div style="overflow:hidden;" class="ui-g-12 ui-md-2" [style.font-weight]="isRead(thread)"
+            [style.color]="getColorThread(thread)">
+            {{thread.authors}}
+          </div>
+          <div style="overflow:hidden;" class="ui-g-12 ui-md-5" [style.font-weight]="isRead(thread)"
+            [style.color]="getColorThread(thread)">
+            <span style="background-color:#ddd;padding:2px 5px;border-radius:10px 10px;"
+              *ngFor="let tag of thread.tags | tagfilter">{{tag}}</span>{{thread.subject}}
+          </div>
+          <div class="ui-g-12 ui-md-1" [style.font-weight]="isRead(thread)" [style.color]="getColorThread(thread)">
+            {{thread.date_relative}}
+          </div>
+
+          <div class="ui-g-12 ui-md-1 search-icon" style="text-align:center">
+            <button pButton type="button" icon="pi pi-search" (click)="selectThread($event, thread)"
+              pTooltip="Show this thread" tooltipPosition="bottom"></button>
+          </div>
+        </div>
+      </ng-template>
+      <!--      <ng-template let-thread pTemplate="gridItem">
+        <div style="padding:.5em" class="ui-g-12 ui-md-3">
+          <p-panel [header]="thread.vin" [style]="{'text-align':'center'}">
+            <div class="car-detail">{{thread.year}} - {{thread.color}}</div>
+            <hr class="ui-widget-content" style="border-top:0">
+            <button pButton type="button" icon="pi pi-search" (click)="selectThread($event, thread)" style="margin-top:0"></button>
+          </p-panel>
+        </div>
+      </ng-template>-->
+    </p-dataView>
+    <!--[header]="selectedThread?.subject"-->
+
+  </p-panel>
+</div>
+
+<p-dialog [focusOnShow]=false [(visible)]="viewmaildetail" [responsive]="true" showEffect="fade" [modal]="true"
+  [blockScroll]=true [closeOnEscape]=true (onHide)="onDialogHide()"
+  [style]="{width: '100vw', height: '100vh', 'max-height':'100vh' , 'max-width':'100vw'}">
+  <!--[contentStyle]="{'width':'100vw',  'height': '93vh', 'max-height':'93vh' , 'max-width':'100vw'}"-->
+  <p-header>
+    <div style="padding: 0em;border-bottom: 0px solid #d9d9d9">
+      <div class="ui-g-12 ui-md-7" style="text-align:left">
+        {{selectedThread?.subject}}
+      </div>
+      <div class="ui-g-12 ui-md-2" style="text-align:right;">
+        <div class="ui-inputgroup">
+          <span style="padding:2px 0px;border-radius:10px 0px;"> Chronological:</span>
+          <p-inputSwitch (onChange)="handleChangeChronological($event)" [(ngModel)]="chronological"></p-inputSwitch>
+        </div>
+      </div>
+
+      <div class="ui-g-12 ui-md-2" style="text-align:right;">
+        <button pButton type="button" label="Mark as read" (click)="markthreadAsRead(selectedThread)"></button>
+      </div>
+
+    </div>
+  </p-header>
+  <div class="ui-g">
+    <p-accordion *ngIf="selectedThread" (onOpen)="onTabOpen($event)" (onClose)="onTabOpen($event)"
+      [style]="{'width':'98vw',  'height': '92vh', 'max-height':'92vh' , 'max-width':'98vw'}">
+
+      <ng-template ngFor let-message [ngForOf]="messages" let-i="index">
+
+        <p-accordionTab [selected]="i===0">
+          <p-header>
+            <!-- styleClass="ui-accordion-header-override" [style.backgroundColor]="getColor()"-->
+            <div class="ui-g" style="padding: 0em;border-bottom: 1px solid #d9d9d9">
+              <div class="ui-g-12 ui-md-8" style="text-align:left">
+                <b>From</b>: {{message?.headers.From}}<BR>
+                <b>To</b>: {{message?.headers.To}}<BR>
+                <span *ngIf="message?.headers?.Cc"><b>Cc</b>: {{message?.headers?.Cc}}<BR></span>
+
+                <b>Date</b>: {{message?.headers.Date}}<BR>
+
+                <b>Tags</b>: <span *ngFor="let tag of message?.tags">{{tag }} </span><BR>
+                <b>Subject</b>: <b>{{message?.headers.Subject}}</b><BR>
+              </div>
+              <div class="ui-g-12 ui-md-4" style="text-align:right;">
+                <button *ngIf="canBeEditAsNew(message)" pButton type="button" class="ui-button-success"
+                  label="Edit as new" (click)="editAsNew($event, message)"></button>
+                <button pButton type="button" class="ui-button-success" label="Event" (click)="toICS($event, message)"
+                  pTooltip="create an event from this mail" tooltipPosition="bottom"></button>
+                <button *ngIf="rtmservice.enableRTM() && !rtmservice.getValidToken()" pButton type="button"
+                  class="ui-button-success" label="Init RTM" (click)="initRememberTheMilk($event)"
+                  pTooltip="Init connection to Remember the milk" tooltipPosition="bottom"></button>
+                <button *ngIf="rtmservice.enableRTM() && rtmservice.getValidToken()" pButton type="button"
+                  class="ui-button-success" label="Task RTM" (click)="convertTask($event, message)"
+                  pTooltip="Create a task from this mail" tooltipPosition="bottom"></button>
+                <button pButton type="button" class="ui-button-success" label="reply"
+                  (click)="reply($event, message)"></button>
+                <button pButton type="button" class="ui-button-success" label="reply all"
+                  (click)="replyAll($event, message)"></button>
+                <button pButton type="button" class="ui-button-success" label="forward"
+                  (click)="forward($event, message)"></button>
+                <BR>
+                <button *ngIf="message?.tags?.includes('unread')" label="Unread" pButton type="button"
+                  class="ui-button-rounded ui-button-danger"></button>
+                <BR>
+                <div class="ui-fluid" *ngFor="let attach of message.attachments">
+                  <button style="padding: -1px;border: 2px; overflow: hidden;" pButton type="button"
+                    class="ui-button-raised ui-button-warning" [label]="attach.name"
+                    (click)="showSaveDialog($event, attach.name,attach.messageid, attach.partid)"></button>
+                </div>
+
+              </div>
+            </div>
+          </p-header>
+          <!-- [innerHTML]="getHtml(message)"  [style]="{'hyphens': auto, 'width': '100vw', 'height': '100vh', 'max-height':'100vh', 'max-width':'100vw'}" -->
+          <div #mailcontent *ngIf="isHtml(message) else textplain;" [innerHTML]="getHtml(message)">
+            Test
+            <!--message?.body[0].content[1]['content-type'] ==='text/html'"-->
+          </div>
+          <ng-template #textplain>
+            <div style="white-space: pre-wrap; width: '100vw'; height: '100vh';max-height:'100vh'; max-width:'100vw'">
+              {{getTextPlain(message)}}
+            </div>
+          </ng-template>
+        </p-accordionTab>
+      </ng-template>
+    </p-accordion>
+  </div>
+</p-dialog>
+
+
+<p-dialog header="Add tag" [(visible)]="addtagvalue">
+  <div class="ui-inputgroup">
+    <input autofocus type="text" [(ngModel)]="tag" pInputText placeholder="Tag (separated using space)">
+    <button pButton type="button" icon="pi pi-check" class="ui-button-success" (click)="addTag()"></button>
+  </div>
+</p-dialog>
+
+<p-dialog [focusOnShow]=false [(visible)]="writeemail" [responsive]="true" showEffect="fade" [modal]="true"
+  [blockScroll]=true [closeOnEscape]=true (onHide)="onMailHide()" (onShow)="onMailShow()"
+  (onInit)="onEditorInit($event)"
+  [style]="{width: '100vw', height: '100vh', 'max-height':'100vh' , 'max-width':'100vw'}"
+  [contentStyle]="{'width':'100vw',  'height': '100vh', 'max-height':'90vh' , 'max-width':'100vw'}">
+  <p-header>
+    <div style="padding: 0em;border-bottom: 1px solid #d9d9d9">
+      <div class="ui-g-12 ui-md-7" style="text-align:left">
+        <b>Compose email</b>
+      </div>
+      <div class="ui-g-12 ui-md-4" style="text-align:right;">
+        <button pButton type="button" class="ui-button-success" label="Cancel" (click)="cancelMail()"></button>
+        <button pButton type="button" class="ui-button-success" label="Save as draft" (click)="saveAsDraft()"></button>
+        <button pButton type="button" class="ui-button-success" label="Send" (click)="sendMail()"></button>
+      </div>
+    </div>
+  </p-header>
+  <div class="ui-g ui-fluid">
+    <div class="ui-g-12 ui-md-12 ui-fluid">
+      <div class="p-grid p-dir-col ui-fluid">
+        <div class="p-col">
+          <div class="box">
+            <div *ngIf="froms.length === 1" class="ui-inputgroup ui-fluid">
+              <span class="ui-inputgroup-addon"><i class="fa fa-user"></i></span>
+              <input type="text" pInputText placeholder="From" [(ngModel)]="from" [readOnly]="true">
+            </div>
+            <div *ngIf="froms.length > 1" class="ui-inputgroup ui-fluid">
+              <span class="ui-inputgroup-addon"><i class="fa fa-user"></i></span>
+              <p-dropdown class="ui-fluid" [options]="froms" [(ngModel)]="from"></p-dropdown>
+            </div>
+          </div>
+        </div>
+        <div class="p-col ui-fluid">
+          <div class="box">
+            <div class="ui-inputgroup">
+              <span class="ui-inputgroup-addon"><i class="fa fa-user"></i></span>
+              <p-autoComplete #to [(ngModel)]="tos" placeholder="To" [suggestions]="resultsto"
+                (completeMethod)="searchto($event)" tyleClass="wid100" [minLength]="3" [multiple]="true" [delay]="400">
+              </p-autoComplete>
+            </div>
+          </div>
+        </div>
+        <div class="p-col">
+          <div class="box">
+            <div class="ui-inputgroup">
+              <span class="ui-inputgroup-addon"><i class="fa fa-user"></i></span>
+              <p-autoComplete #cc [(ngModel)]="ccs" placeholder="Cc" [suggestions]="resultscc"
+                (completeMethod)="searchcc($event)" tyleClass="wid100" [minLength]="3" [multiple]="true" [delay]="400">
+              </p-autoComplete>
+            </div>
+          </div>
+        </div>
+        <div class="p-col">
+          <div class="box">
+            <div class="ui-inputgroup">
+              <span class="ui-inputgroup-addon"><i class="fa fa-user"></i></span>
+              <p-autoComplete #bcc [(ngModel)]="bccs" placeholder="bcc" [suggestions]="resultsbcc"
+                (completeMethod)="searchbcc($event)" tyleClass="wid100" [minLength]="3" [multiple]="true" [delay]="400">
+              </p-autoComplete>
+            </div>
+          </div>
+        </div>
+        <div class="p-col">
+          <div class="box">
+            <div class="ui-inputgroup">
+              <span class="ui-inputgroup-addon"><i class="far fa-envelope"></i></span>
+              <input type="text" [(ngModel)]="subject" pInputText placeholder="Subject">
+            </div>
+          </div>
+        </div>
+        <div class="ng-fluid p-col">
+          <div class="ng-fluid box">
+            <p-editor #editor class="ng-fluid" [(ngModel)]="mailbody" [style]="{'min-height':'100px'}"
+              [formats]="['background','bold', 'color', 'font', 'code', 'italic', 'link', 'size', 'strike', 'script', 'underline', 'blockquote', 'header', 'indent', 'list', 'align', 'direction', 'code-block', 'image', 'video']">
+              <p-header>
+                <span class="ql-formats">
+                  <span class="ql-formats">
+                    <select class="ql-font"></select>
+                    <select class="ql-size"></select>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-bold"></button>
+                    <button class="ql-italic"></button>
+                    <button class="ql-underline"></button>
+                    <button class="ql-strike"></button>
+                  </span>
+                  <span class="ql-formats">
+                    <select class="ql-color"></select>
+                    <select class="ql-background"></select>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-script" value="sub"></button>
+                    <button class="ql-script" value="super"></button>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-header" value="1"></button>
+                    <button class="ql-header" value="2"></button>
+                    <button class="ql-blockquote"></button>
+                    <button class="ql-code-block"></button>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-list" value="ordered"></button>
+                    <button class="ql-list" value="bullet"></button>
+                    <button class="ql-indent" value="-1"></button>
+                    <button class="ql-indent" value="+1"></button>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-direction" value="rtl"></button>
+                    <select class="ql-align"></select>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-link"></button>
+                    <button class="ql-image"></button>
+                    <button class="ql-video"></button>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-clean"></button>
+                  </span>
+                </span>
+              </p-header>
+
+            </p-editor>
+          </div>
+        </div>
+        <div class="p-col">
+          <div class="box">
+            <p-fileUpload #upload name="demo[]" customUpload="true" (uploadHandler)="myUploader($event, upload)"
+              [showUploadButton]=false [showCancelButton]=false [auto]=true multiple="multiple" maxFileSize="10000000">
+              <ng-template let-file pTemplate="file">
+
+              </ng-template>
+              <ng-template pTemplate="content">
+                <ul *ngIf="uploadedFiles.length">
+                  <li *ngFor="let file of uploadedFiles">{{file.name}} - {{file.size}} bytes<p-button
+                      icon="fas fa-trash" (click)="deleteAttachement(file)"></p-button>
+                  </li>
+                </ul>
+              </ng-template>
+            </p-fileUpload>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</p-dialog>
+
+<p-dialog [focusOnShow]=false [(visible)]="ics" [responsive]="true" showEffect="fade" [modal]="true" [blockScroll]=true
+  [closeOnEscape]=true (onHide)="onIcsHide()" (onShow)="onIcsShow()"
+  [style]="{width: '100vw', height: '100vh', 'max-height':'100vh' , 'max-width':'100vw'}"
+  [contentStyle]="{'width':'100vw',  'height': '100vh', 'max-height':'90vh' , 'max-width':'100vw'}">
+
+  <div class="p-grid p-justify-between">
+    <div class="p-col p-col-align-stretch" style="text-align: center; align-content: center; align-items: center">
+      <h3>Title</h3>
+      <input type="text" pInputText [readOnly]=true [(ngModel)]="icstitre">
+      <BR>
+      <h3>Starting date </h3>
+      <p-calendar [(ngModel)]="icsdate" [inline]="true" [required]=true [locale]="enCalendar" dateFormat="dd/mm/yy">
+      </p-calendar>
+    </div>
+    <div class="p-col p-col-align-stretch" style="text-align: center; align-content: center; align-items: center">
+      <h3>Starting time </h3>
+      <p-calendar [(ngModel)]="icstime" [timeOnly]="true" [inline]="true" [required]=true></p-calendar>
+      <BR>
+      <h3>Duration: {{icsduraction}}</h3>
+      <p-slider [disabled]="icsallday" [(ngModel)]="icsduraction" [step]="15" [min]="15" max="240"></p-slider>
+      <BR>
+      <h3>All day: {{icsallday}}</h3>
+      <p-checkbox [(ngModel)]="icsallday" binary="true"></p-checkbox>
+    </div>
+    <div class="p-col p-col-align-end" style="text-align: right; align-content: right; align-items: right">
+        <button pButton type="button" label="SendICS" (click)="sendICS()"></button>
+    </div>
+  </div>
+
+
+</p-dialog>
+
+<p-dialog [focusOnShow]=false [(visible)]="task" [responsive]="true" showEffect="fade" [modal]="true" [blockScroll]=true
+  [closeOnEscape]=true (onHide)="onTaskHide()" (onShow)="onTaskShow()"
+  [style]="{width: '100vw', height: '100vh', 'max-height':'100vh' , 'max-width':'100vw'}"
+  [contentStyle]="{'width':'100vw',  'height': '100vh', 'max-height':'90vh' , 'max-width':'100vw'}">
+  <div class="p-grid p-justify-between">
+    <div class="p-col p-col-align-stretch" style="text-align: left; align-content: left; align-items: left">
+      <h3>Title</h3>
+      <input type="text" pInputText [readOnly]=true [(ngModel)]="tasktitre">
+      <BR>
+      <h3>Due date </h3>
+      <p-calendar [(ngModel)]="taskdate" [inline]="true" [required]=true [locale]="enCalendar" dateFormat="dd/mm/yy">
+      </p-calendar>
+    </div>
+    <div class="p-col p-col-align-end" style="text-align: right; align-content: right; align-items: right">
+      <button pButton type="button" label="Create Task" (click)="createTask()"></button>
+    </div>
+  </div>
+
+</p-dialog>
