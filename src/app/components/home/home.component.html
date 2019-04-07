@@ -17,7 +17,7 @@
     <div class="ui-fluid">
       <p-autoComplete class="ui-md-12" placeholder="Query" [(ngModel)]="query" (keydown)="checkEnter($event)"
         [suggestions]="resultresearch" (completeMethod)="searchquery($event)"
-        pTooltip="query language for notmuch (see notmuch documentation)" tooltipPosition="bottom"></p-autoComplete>
+        pTooltip="query language for notmuch (see notmuch documentation)" tooltipPosition="bottom" showTransitionOptions="20ms ease-out"></p-autoComplete>
     </div>
   </div>
   <div class="ui-md-1">
@@ -305,7 +305,7 @@
             <div class="ui-inputgroup">
               <span class="ui-inputgroup-addon"><i class="fa fa-user"></i></span>
               <p-autoComplete #to [(ngModel)]="tos" placeholder="To" [suggestions]="resultsto"
-                (completeMethod)="searchto($event)" tyleClass="wid100" [minLength]="3" [multiple]="true" [delay]="400">
+                (completeMethod)="searchto($event)" tyleClass="wid100" [minLength]="3" [multiple]="true" [delay]="400" showTransitionOptions="20ms ease-out">
               </p-autoComplete>
             </div>
           </div>

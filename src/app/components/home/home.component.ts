@@ -431,11 +431,11 @@ export class HomeComponent implements OnInit, AfterViewInit {
   }
 
   searchquery(event) {
-    this.resultresearch = [];
     const terms = event.query.split(' ');
     if (terms[terms.length - 1].startsWith('from:')) {
       const mail = terms[terms.length - 1].substring(5, terms[terms.length - 1].length);
       this.notmuchService.getMailAddress(mail).subscribe(res => {
+        this.resultresearch = [];
         res.forEach(d => {
           this.resultresearch.push(event.query.substring(0, event.query.length - mail.length) + d);
         });
@@ -444,6 +444,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     if (terms[terms.length - 1].startsWith('to:')) {
       const mail = terms[terms.length - 1].substring(3, terms[terms.length - 1].length);
       this.notmuchService.getMailAddress(mail).subscribe(res => {
+        this.resultresearch = [];
         res.forEach(d => {
           this.resultresearch.push(event.query.substring(0, event.query.length - mail.length) + d);
         });
@@ -452,6 +453,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     if (terms[terms.length - 1].startsWith('cc:')) {
       const mail = terms[terms.length - 1].substring(3, terms[terms.length - 1].length);
       this.notmuchService.getMailAddress(mail).subscribe(res => {
+        this.resultresearch = [];
         res.forEach(d => {
           this.resultresearch.push(event.query.substring(0, event.query.length - mail.length) + d);
         });
@@ -460,6 +462,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     if (terms[terms.length - 1].startsWith('tag:')) {
       const tag = terms[terms.length - 1].substring(4, terms[terms.length - 1].length);
       this.notmuchService.getTags((res) => {
+        this.resultresearch = [];
         res.filter(d => d.startsWith(tag)).forEach(d => {
           this.resultresearch.push(event.query.substring(0, event.query.length - tag.length) + d);
         });
@@ -473,6 +476,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
       if (this.notmuchService.localmailfoldermultiaccounts) {
         filter = filter.replace('/', '.');
       }
+      this.resultresearch = [];
       res.filter(d => d.startsWith(filter)).forEach(d => {
         let dfilter = d;
         if (this.notmuchService.localmailfoldermultiaccounts) {
@@ -486,6 +490,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     if (terms[terms.length - 1].startsWith('-tag:')) {
       const tag = terms[terms.length - 1].substring(5, terms[terms.length - 1].length);
       this.notmuchService.getTags((res) => {
+        this.resultresearch = [];
         res.filter(d => d.startsWith(tag)).forEach(d => {
           this.resultresearch.push(event.query.substring(0, event.query.length - tag.length) + d);
         });
