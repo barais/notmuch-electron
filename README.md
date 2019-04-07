@@ -10,6 +10,7 @@
     - [Configure msmtp](#configure-msmtp)
     - [Configure notmuch](#configure-notmuch)
     - [Configure afew](#configure-afew)
+    - [Configure automatic synchronisation](#configure-automatic-synchronisation)
   - [Technologies used](#technologies-used)
 - [Join the development](#join-the-development)
   - [Build](#build)
@@ -46,23 +47,23 @@ This projet is an initial version of a mail user agent on top of notmuch.
 
 ## Features
 
-- Reading email from several imap services (mbsync)
+- Reading email from several imap services ([mbsync](http://isync.sourceforge.net/mbsync.html))
 - Composing new email
 - Mail address completion
 - Replying, Forwarding, editing as new emails
-- Fast mail query (notmuch)
+- Fast mail query ([notmuch](https://notmuchmail.org/))
 - Notmuch query completion
 - ics event creation from email
-- Rememberthemilk task creation from email
-- Email spell check with language detection
-- Customisable keyboard shortcut
-- Customisable email text shortcut (useful for greeting formula)
-- Outbox folder management to send email when network connxion is up
+- [Rememberthemilk](https://www.rememberthemilk.com/) task creation from email
+- Email spell check with language detection (using ctrl + UP to automaically detect the language)
+- Customisable keyboard shortcuts (for shortcut to common queries)
+- Customisable email text shortcut (useful for greeting formulas)
+- Outbox folder management to send email when network connection is up
 - smtp server selection for sending email
 - Saving email as draft
-- imap idle support to get push, notifications when new email arrive
+- imap idle support to get push, notifications when new email arrive (see [Configure automatic synchronisation](#configure-automatic-synchronisation))
 - drag and drop to add attachments
-- color thread based on tag
+- color thread based on tags
 - ...
 
 ## Install 
@@ -396,6 +397,42 @@ A few could be used also to automatically move mail to specific folder.
 
 The main important thing is to not forget to create a post-new hook for notmuch (see [https://afew.readthedocs.io/en/latest/quickstart.html#initial-config](https://afew.readthedocs.io/en/latest/quickstart.html#initial-config)).
 
+### Configure automatic synchronisation
+
+When everything work you can configure crontab to automatically update your email. For doing regular update  the best is to use crontab but we will first install sem to avoid simultaneous executions of mbsync. 
+
+```bash
+sudo apt-get install parallel
+sem --will-cite #to disable sem citation output
+```
+
+Next on crontab you can add in your contab (update with the correct path)
+
+
+```bash
+*/2 * * * * sem --fg -j 1 --id mbsync  '/home/barais/git/isync-isync/src/mbsync -a' ; sem -j 1 --fg --id notmuch '/usr/local/bin/notmuch new --quiet'
+```
+
+If you want to use idle (support the notification from the server when new mail arrive). 
+
+You can fork [this repository](https://github.com/barais/node-imapnotify). 
+
+```bash
+git clone https://github.com/barais/node-imapnotify
+```
+
+update the config.js file and copy it to ~/.config/node-imapnotify folder. 
+
+```bash
+cd node-imapnotify
+npm install
+mkdir ~/.config/node-imapnotify
+cp config.js  ~/.config/node-imapnotify
+./bin/imapnotify -c  ~/.config/node-imapnotify/config.js
+```
+
+Enjoy. 
+
 ## Technologies used
 
  - [Electron angular native](https://github.com/meltedspark/electron-angular-native/) 
@@ -416,8 +453,8 @@ you need to install node and the dependencies for [angular electron native](http
 
 ```bash
 npm i -g yarn
-yarn install 
-yarn 
+yarn install
+yarn
 yarn start # to develop
 yarn dist:linux:64 # To build the image
 ```
