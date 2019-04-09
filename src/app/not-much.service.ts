@@ -701,7 +701,8 @@ export class NotMuchService implements INotMuchService {
   }
 
   saveAttachmentContent(messageid, attachmentid, dest): Promise<string> {
-    return this.execPromise(this.notmuchpath + ' show --format=raw --entire-thread=false --part=' + attachmentid + ' \'id:' + messageid + '\' > ' + dest);
+    console.log(dest.replace(/ /g , '\ ' ));
+    return this.execPromise(this.notmuchpath + ' show --format=raw --entire-thread=false --part=' + attachmentid + ' \'id:' + messageid + '\' > ' + dest.replace(/ /g , '\\ ' ));
   }
 
   // notmuch reply --format=json --reply-to=sender id:1be0a9cd-7cfc-6ddc-d02c-1d8908dacf08@univ-rennes1.fr > git/notmychelectronreader/src/testdata/replyall.json
