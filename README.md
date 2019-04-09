@@ -3,6 +3,8 @@
 
 notmuch-electron is a mail user agent developed using electron and built on top of not much for linux and macos environment.
 
+A short demo is available [here](https://videos.diverse-team.fr/notmuch-electron.html).
+
 ## Table of contents
 
 - [notmuch-electron](#notmuch-electron)
