@@ -17,6 +17,7 @@ import { shell } from 'electron';
 import { SpellCheckHandler, ContextMenuListener, ContextMenuBuilder } from 'electron-spellchecker';
 import 'rxjs/add/observable/merge';
 
+
 // import { NotMuchServiceMock } from '../../not-much.service.mock';
 
 
@@ -773,8 +774,26 @@ export class HomeComponent implements OnInit, AfterViewInit {
       const word = words.pop();
       const match = this.notmuchService.shortcutmailtyping.find(e => e.shortcut === word);
       if (match !== undefined) {
-        editor.quill.deleteText(range.index - word.length, word.length);
-        editor.quill.insertText(range.index - word.length, match.formula);
+        const deletesize = word.length ;
+        const formula = '' + match.formula ;
+        let d2 = {};
+        if (range.index - word.length > 0) {
+          d2 = {
+          ops: [
+            { retain: range.index - word.length},
+            { delete : deletesize },
+            {insert : formula}
+          ]
+        };
+      } else {
+        d2 = {
+          ops: [
+            { delete : deletesize },
+            {insert : formula}
+          ]
+        };
+      }
+        editor.quill.updateContents(d2, 'user');
       }
     });
 
@@ -783,8 +802,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
       shortKey: true
     }, (range, context) => {
       let text = '';
-        text = editor.quill.getText(0, range.index);
-        window.spellCheckHandler.provideHintText(text);
+      text = editor.quill.getText(0, range.index);
+      window.spellCheckHandler.provideHintText(text);
     });
 
 

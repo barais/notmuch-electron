@@ -1,8 +1,13 @@
 
-
 # notmuch-electron
 
+notmuch-electron is a mail user agent developed using electron and built on top of not much for linux and macos environment.
+
+## Table of contents
+
 - [notmuch-electron](#notmuch-electron)
+  - [Table of contents](#table-of-contents)
+  - [Requirements](#requirements)
   - [Features](#features)
   - [Install](#install)
     - [Remember the milk](#remember-the-milk)
@@ -17,6 +22,8 @@
     - [Known issue](#known-issue)
   - [Contribute](#contribute)
 
+## Requirements
+
 Before we get started, let me just tell you a bit about how I use email.
 
 - I currently have several IMAP-email accounts with different email-service-providers
@@ -29,21 +36,21 @@ Before we get started, let me just tell you a bit about how I use email.
 - All emails will be synced to a local folder on my computer, as an eternal backup.
 - I want to create meeting from my email
 - I want to create task (rememberthemilk) from my email
-- I travel a lot and I need an email that support numerous network lost every day. 
+- I travel a lot and I need an email that support numerous network lost every day.
 
-It exists several great tool throught the CLI, the most famous one is [NotMuch](https://notmuchmail.org/).  Notmuch is a mail indexer. Essentially, is a very thin front end on top of [xapian](https://xapian.org/). Much like Sup, it focuses on one thing: indexing your email messages. Notmuch can be used as an email reader, or simply as an indexer and search tool for other MUAs, like mutt. I do not find the MUA that perfectly fit my neet. That is why, I develop recently a new one using electron, angular and primeng. 
+It exists several great tool throught the CLI, the most famous one is [NotMuch](https://notmuchmail.org/).  Notmuch is a mail indexer. Essentially, is a very thin front end on top of [xapian](https://xapian.org/). Much like Sup, it focuses on one thing: indexing your email messages. Notmuch can be used as an email reader, or simply as an indexer and search tool for other MUAs, like mutt. I do not find the MUA that perfectly fit my neet. That is why, I develop recently a new one using electron, angular and primeng.
 
 To send email, I use [nodemailer](https://www.nodemailer.com/) on top [msmtp](https://marlam.de/msmtp/).
 
-To synchonize email, I use [mbsync](http://isync.sourceforge.net/mbsync.html). 
+To synchonize email, I use [mbsync](http://isync.sourceforge.net/mbsync.html).
 
-To manage the task, I use [rememberthemilk](https://www.rememberthemilk.com/app/#list/14936389). 
+To manage the task, I use [rememberthemilk](https://www.rememberthemilk.com/app/#list/14936389).
 
 To apply some rules on incoming messages, I use [afew](https://github.com/afewmail/afew). **afew** is an initial tagging script for notmuch:
 
-To get push, notifications when new email arrive, I use a personal version of [node-imapnotify]() based on the initial version of [node-imapnotify](https://github.com/a-sk/node-imapnotify/).
+To get push, notifications when new email arrive, I use a personal version of [node-imapnotify](https://github.com/barais/node-imapnotify) based on the initial version of [node-imapnotify](https://github.com/a-sk/node-imapnotify/).
 
-This projet is an initial version of a mail user agent on top of notmuch. 
+This projet is an initial version of a mail user agent on top of notmuch.
 
 ## Features
 
@@ -66,12 +73,11 @@ This projet is an initial version of a mail user agent on top of notmuch.
 - color thread based on tags
 - ...
 
-## Install 
+## Install
 
-First you need to install and configure msmtp, notmuch, mbsync for your account, I will detail at the end of this readme my configuration for these pieces of software. 
+First you need to install and configure msmtp, notmuch, mbsync for your account, I will detail at the end of this readme my configuration for these pieces of software.
 
 See     [Configure mbsync](#configure-mbsync), [Configure msmtp](#configure-msmtp), [Configure notmuch](#configure-notmuch) and [Configure afew](#configure-afew)
-
 
 ```bash
 sudo apt-get install msmtp mbsync notmuch notmuch-addrlookup afew gnugpg2 ca-certificates
@@ -79,7 +85,8 @@ sudo apt-get install msmtp mbsync notmuch notmuch-addrlookup afew gnugpg2 ca-cer
 
 msmstp is optional, as you can passe the configuration of your smtp server in notmuch-electron config file but msmtp could use password store in your key manager which is a better practise.
 
-Check if you can: 
+Check if you can:
+
 - sync your email
 
 ```bash
@@ -94,11 +101,9 @@ notmuch search --limit=3 --format=json path:INBOX/**
 
 - query your mail address index
 
-
 ```bash
 notmuch-addrlookup joh
  ```
-
 
 - Send a simple email with your different acount
 
@@ -106,13 +111,13 @@ notmuch-addrlookup joh
 printf "To: @domain.com\nFrom: @gmail.com\nSubject: Email Test Using MSMTP\nHello there. This is email test from MSMTP." | msmtp recipient@domain.com
 ```
 
-Next you need to install mktemp and base64. 
+Next you need to install mktemp and base64.
 
 ```bash
 sudo apt-get install coreutils
 ```
 
-Newt you can [download]() notmuch-electron. It comes as an [app image](https://appimage.org/). The AppImage format is a format for packaging applications in a way that allows them to run on a variety of different target systems (base operating systems, distributions) without further modification.
+Next you can [download](https://github.com/barais/notmuch-electron/releases) notmuch-electron. It comes as an [app image](https://appimage.org/). The AppImage format is a format for packaging applications in a way that allows them to run on a variety of different target systems (base operating systems, distributions) without further modification.
 
 First, configure the application, in ~/.config/notmuch-electron/config.json put the following json file
 
@@ -126,7 +131,10 @@ First, configure the application, in ~/.config/notmuch-electron/config.json put 
         "path": "/usr/bin/msmtp"
       },
       "from": "barais@irisa.fr",
-      "signature": "Olivier Barais <BR> Equipe INRIA DiverSE <BR> Université de Rennes 1, INRIA, IRISA"
+      "signature": "Olivier Barais <BR> Equipe INRIA DiverSE <BR> Université de Rennes 1, INRIA, IRISA",
+      "sentfolder": "IRISA/Sent",
+      "draftfolder": "IRISA/Drafts"
+
     }, {
       "name": "rennes1",
       "transport": {
@@ -136,10 +144,14 @@ First, configure the application, in ~/.config/notmuch-electron/config.json put 
         "path": "/usr/bin/msmtp"
       },
       "from": "olivier.barais@univ-rennes1.fr",
-      "signature": "Olivier Barais <BR> Equipe INRIA DiverSE <BR> Université de Rennes 1, INRIA, IRISA"
+      "signature": "Olivier Barais <BR> Equipe INRIA DiverSE <BR> Université de Rennes 1, INRIA, IRISA",
+      "sentfolder": "IRISA/Sent",
+      "draftfolder": "IRISA/Drafts"
+
     }
 
   ],
+  "defaultoutputfolder": "IRISA/Outbox",
   "notmuchpath": "/usr/bin/notmuch",
   "base64path": "/usr/bin/base64",
   "notmuchaddresspath": "/usr/bin/notmuch-addrlookup",
@@ -194,8 +206,10 @@ First, configure the application, in ~/.config/notmuch-electron/config.json put 
 }
 ```
 
-In this file, you must configure 
-- the different smtp account (transport follows the nodemailer tranport configuration) (*smtpaccounts*)
+In this file, you must configure:
+
+- the different smtp account (*transport* follows the nodemailer tranport configuration, *signature* is the signature to include in your message, *sentfolder* and *draftfolder*  correspond to the notmuch path used to save your sent and draft messages) (*smtpaccounts*)
+- the notmuch path used to save the message that can not been sent and that will be sent later (*defaultoutputfolder*)
 - the path for the different command used (base64, notmuch, notmuch-addrlookup, mktemp) (*notmuchpath*, *base64path*, *notmuchaddresspath*, *mktemppath* )
 - the path and template used to create tmpfile (*tmpfilepath*)
 - the path for your local email folder (*localmailfolder*)
@@ -208,11 +222,10 @@ In this file, you must configure
 - the different mail editing shortcut that can be used to automatically replace text when composing email using ctrl + UP keyboard. (*shortcutmailtyping*)
 - the different color to use when a thread as a specifig tag (used space between tag if you want to apply in several tag exist for this thread). (*colortags*)
 
-
 ### Remember the milk
 
-If you want to use *remeberthemilk*, [apply for an api key](https://www.rememberthemilk.com/services/api/). 
-If you do not want to use *remeberthemilk*, just remove rtf field from your config object. For the first used of remember the milk, you must get your access token in clicking on the init rtm button on one of your email. It will open a browser windows to grant access to your remember the milk account. 
+If you want to use *remeberthemilk*, [apply for an api key](https://www.rememberthemilk.com/services/api/).
+If you do not want to use *remeberthemilk*, just remove rtf field from your config object. For the first used of remember the milk, you must get your access token in clicking on the init rtm button on one of your email. It will open a browser windows to grant access to your remember the milk account.
 
 ### Configure mbsync
 
@@ -226,17 +239,16 @@ mkdir ~/mail/IRISA
 mkdir ~/mail/gmail
 ```
 
-
-Just for my personal use, I add the following config file. To create the gpg file, just run the following command. Do not hesitate to use your password manager to save the pass. 
+Just for my personal use, I add the following config file. To create the gpg file, just run the following command. Do not hesitate to use your password manager to save the pass.
 
 ```bash
 # change password with your mail password
 echo -e "password" | gpg2  --symmetric  -o ~/mail/zimbra.inria.fr.gpg
-# change the output file 
+# change the output file
 
 ```
 
-For getting the certificate for your server, you can follow the [following guide](http://fengxia.co.s3-website-us-east-1.amazonaws.com/mbsync%20mu4e%20email.html). 
+For getting the certificate for your server, you can follow the [following guide](http://fengxia.co.s3-website-us-east-1.amazonaws.com/mbsync%20mu4e%20email.html).
 
 ```txt
 IMAPAccount  main
@@ -257,7 +269,7 @@ Flatten .
 Channel main
 Master :main-remote:
 Slave :main-local:
-Patterns INBOX Sent Drafts Trash Archives 
+Patterns INBOX Sent Drafts Trash Archives
 Create Both
 Sync Full
 SyncState *
@@ -387,9 +399,7 @@ synchronize_flags=true
 
 ```
 
-
 ### Configure afew
-
 
 The [documentation](https://afew.readthedocs.io/en/latest/) of **afew** is great. Please follow it to configure afew.
 
@@ -399,7 +409,7 @@ The main important thing is to not forget to create a post-new hook for notmuch 
 
 ### Configure automatic synchronisation
 
-When everything work you can configure crontab to automatically update your email. For doing regular update  the best is to use crontab but we will first install sem to avoid simultaneous executions of mbsync. 
+When everything work you can configure crontab to automatically update your email. For doing regular update  the best is to use crontab but we will first install sem to avoid simultaneous executions of mbsync.
 
 ```bash
 sudo apt-get install parallel
@@ -408,20 +418,19 @@ sem --will-cite #to disable sem citation output
 
 Next on crontab you can add in your contab (update with the correct path)
 
-
 ```bash
 */2 * * * * sem --fg -j 1 --id mbsync  '/home/barais/git/isync-isync/src/mbsync -a' ; sem -j 1 --fg --id notmuch '/usr/local/bin/notmuch new --quiet'
 ```
 
-If you want to use idle (support the notification from the server when new mail arrive). 
+If you want to use idle (support the notification from the server when new mail arrive).
 
-You can fork [this repository](https://github.com/barais/node-imapnotify). 
+You can fork [this repository](https://github.com/barais/node-imapnotify).
 
 ```bash
 git clone https://github.com/barais/node-imapnotify
 ```
 
-update the config.js file and copy it to ~/.config/node-imapnotify folder. 
+update the config.js file and copy it to ~/.config/node-imapnotify folder.
 
 ```bash
 cd node-imapnotify
@@ -431,24 +440,25 @@ cp config.js  ~/.config/node-imapnotify
 ./bin/imapnotify -c  ~/.config/node-imapnotify/config.js
 ```
 
-Enjoy. 
+Enjoy.
 
 ## Technologies used
 
- - [Electron angular native](https://github.com/meltedspark/electron-angular-native/) 
- - [Electron](http://electron.atom.io/) 4
- - [Spectron](https://github.com/electron/spectron) 5
- - [Angular](https://angular.io/) 7
- - [Angular CLI](https://cli.angular.io/) 7
- - [Angular AoT](https://angular.io/guide/aot-compiler) for production
- - [Typescript](https://www.typescriptlang.org/) 3
- - Native node.js addons (using [nan](https://github.com/nodejs/nan))
- - Native libraries support (using [node-ffi-napi](https://github.com/node-ffi-napi/node-ffi-napi))
- - Hot reload for development
+- [Electron angular native](https://github.com/meltedspark/electron-angular-native/)
+- [Electron](http://electron.atom.io/) 4
+- [Spectron](https://github.com/electron/spectron) 5
+- [Angular](https://angular.io/) 7
+- [Angular CLI](https://cli.angular.io/) 7
+- [Angular AoT](https://angular.io/guide/aot-compiler) for production
+- [Typescript](https://www.typescriptlang.org/) 3
+- Native node.js addons (using [nan](https://github.com/nodejs/nan))
+- Native libraries support (using [node-ffi-napi](https://github.com/node-ffi-napi/node-ffi-napi))
+- Hot reload for development
 
 # Join the development
 
 ## Build
+
 you need to install node and the dependencies for [angular electron native](https://github.com/meltedspark/electron-angular-native/)
 
 ```bash
@@ -463,8 +473,6 @@ yarn dist:linux:64 # To build the image
 
 I had to install libxkbfile-dev
 
-
 ## Contribute
 
 Do not hesitate to fork, create bug report or pull request.
-

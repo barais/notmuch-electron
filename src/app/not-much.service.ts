@@ -2,13 +2,10 @@ import { Injectable, SecurityContext } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 
 import Thread from './thread';
-// const fs = require('fs');
 import { TreeNode } from 'primeng/api';
 import log from 'electron-log';
 import INotMuchService from './inot-much-service';
-// import { execFileSync } from 'child_process';
 import { ElectronService } from './providers/electron.service';
-// const  execFile  = require('child_process').execFile;
 import nodemailer from 'nodemailer';
 import { Mail } from './mail';
 import jsel from 'jsel';
@@ -30,8 +27,11 @@ export class NotMuchService implements INotMuchService {
   draftsendtransporter;
   transporters: Map<string, any> = new Map();
   signatures: Map<string, string> = new Map();
+  draftfolders: Map<string, string> = new Map();
+  sendfolders: Map<string, string> = new Map();
   shortcutqueries: Array<any> = [];
   shortcutmailtyping: Array<any> = [];
+  defaultoutputfolder: String;
   colortags: Array<any> = [];
 
   mails: Map<string, string[]> = new Map();
@@ -78,10 +78,12 @@ export class NotMuchService implements INotMuchService {
           'path': '/usr/sbin/sendmail'
         },
         'from': 'olivier.barais@univ-rennes1.fr',
-        'signature': ''
-
+        'signature': '',
+        'sentfolder': 'Sent',
+        'draftfolder': 'Drafts'
       }
       ],
+      'defaultoutputfolder': 'Outbox',
       'notmuchpath': '/usr/bin/notmuch',
       'base64path': '/usr/bin/base64',
       'notmuchaddresspath': '/usr/bin/notmuch-addrlookup',
@@ -120,12 +122,21 @@ export class NotMuchService implements INotMuchService {
       // log.info(smtp.from);
       this.transporters.set(smtp.from, transporter);
       this.signatures.set(smtp.from, smtp.signature);
+      this.draftfolders.set(smtp.from, smtp.draftfolder);
+      this.sendfolders.set(smtp.from, smtp.sentfolder);
     });
     if (this.data.notmuchpath != null) {
       this.notmuchpath = this.data.notmuchpath;
     } else {
       this.notmuchpath = '/usr/bin/notmuch';
     }
+    if (this.data.defaultoutputfolder != null) {
+      this.defaultoutputfolder = this.data.defaultoutputfolder;
+    } else {
+      this.defaultoutputfolder = 'Outbox';
+    }
+
+
     if (this.data.notmuchaddresspath != null) {
       this.notmuchaddresspath = this.data.notmuchaddresspath;
     } else {
@@ -231,7 +242,7 @@ export class NotMuchService implements INotMuchService {
 
     let res = this.getAccountDirectories(path1);
     const subfolder = [];
-    res.forEach( e => {
+    res.forEach(e => {
       const res1 = this.getFolderDirectories(this.localmailfolder + '/' + e);
       res1.forEach(folder => subfolder.push(e + '.' + folder));
     });
@@ -572,6 +583,16 @@ export class NotMuchService implements INotMuchService {
       if (signature === undefined) {
         signature = this.signatures.get(Array.from(this.signatures.keys())[0]);
       }
+      let sentfolder = this.sendfolders.get(sender);
+      if (sentfolder === undefined) {
+        sentfolder = this.sendfolders.get(Array.from(this.sendfolders.keys())[0]);
+      }
+      let draftfolder = this.draftfolders.get(sender);
+      if (draftfolder === undefined) {
+        draftfolder = this.draftfolders.get(Array.from(this.draftfolders.keys())[0]);
+      }
+
+
       let htmlwithsign = html;
       if (signature !== undefined && signature !== '') {
         htmlwithsign = html + '<BR>' + signature;
@@ -627,7 +648,7 @@ export class NotMuchService implements INotMuchService {
                     }
                     const tmp = ('' + this.eservice.childProcess.execSync(this.mktemppath + ' ' + this.tmpfilepath)).replace('\n', '');
                     this.eservice.fs.writeFileSync(tmp, info.message, 'utf8');
-                    this.eservice.childProcess.execSync(this.notmuchpath + ' insert --folder=Sent -unread -new < ' + '\"' + tmp + '\"');
+                    this.eservice.childProcess.execSync(this.notmuchpath + ' insert --folder=' + sentfolder + ' -unread -new < ' + '\"' + tmp + '\"');
                     this.execPromise('rm -f ' + tmp).then(r => log.info('deleted ' + tmp));
                   } else {
                     log.error(err2);
@@ -644,7 +665,7 @@ export class NotMuchService implements INotMuchService {
                     }
                     const tmp = ('' + this.eservice.childProcess.execSync(this.mktemppath + ' ' + this.tmpfilepath)).replace('\n', '');
                     this.eservice.fs.writeFileSync(tmp, info.message, 'utf8');
-                    this.eservice.childProcess.execSync(this.notmuchpath + ' insert --folder=Outbox --create-folder -unread -new < ' + '\"' + tmp + '\"');
+                    this.eservice.childProcess.execSync(this.notmuchpath + ' insert --folder=' + this.defaultoutputfolder + ' --create-folder -unread -new < ' + '\"' + tmp + '\"');
                     // log.info('will delete ' + tmp);
                     this.execPromise('rm -f ' + tmp).then(r => log.info('deleted ' + tmp));
                   } else {
@@ -667,7 +688,7 @@ export class NotMuchService implements INotMuchService {
               }
               const tmp = ('' + this.eservice.childProcess.execSync(this.mktemppath + ' ' + this.tmpfilepath)).replace('\n', '');
               this.eservice.fs.writeFileSync(tmp, info.message, 'utf8');
-              this.eservice.childProcess.execSync(this.notmuchpath + ' insert --folder=Drafts -unread -new < ' + '\"' + tmp + '\"');
+              this.eservice.childProcess.execSync(this.notmuchpath + ' insert --folder=' + draftfolder + ' -unread -new < ' + '\"' + tmp + '\"');
               // log.info('will delete ' + tmp);
               this.execPromise('rm -f ' + tmp).then(r => log.info('deleted ' + tmp));
             } else {
@@ -680,7 +701,7 @@ export class NotMuchService implements INotMuchService {
   }
 
   saveAttachmentContent(messageid, attachmentid, dest): Promise<string> {
-    return this.execPromise(this.notmuchpath + ' show --format=raw --entire-thread=false --part=' + attachmentid + ' \'id:' + messageid + '\' > ' + dest );
+    return this.execPromise(this.notmuchpath + ' show --format=raw --entire-thread=false --part=' + attachmentid + ' \'id:' + messageid + '\' > ' + dest);
   }
 
   // notmuch reply --format=json --reply-to=sender id:1be0a9cd-7cfc-6ddc-d02c-1d8908dacf08@univ-rennes1.fr > git/notmychelectronreader/src/testdata/replyall.json
@@ -710,7 +731,7 @@ export class NotMuchService implements INotMuchService {
           const origi = dom.select('//*[headers]');
           mail.body = '<BR> <BR> On ' + new Date(origi.timestamp * 1000) + ', ' + origi.headers.From + 'wrote: <BR>';
           mail.body = mail.body + '<blockquote>';
-          mail.text =  this.getTextPlain(origi.id);
+          mail.text = this.getTextPlain(origi.id);
           mail.body = mail.body + mail.text.replace(/\n/g, '<BR>');
           mail.body = mail.body + '</blockquote>';
         }
@@ -957,7 +978,7 @@ export class NotMuchService implements INotMuchService {
 
 
   flushOutBox() {
-    const stdout = this.eservice.childProcess.execFileSync(this.notmuchpath, ('search --exclude=true --format=json' + ' path:Outbox/**').split(' '));
+    const stdout = this.eservice.childProcess.execFileSync(this.notmuchpath, ('search --exclude=true --format=json' + ' path:' + this.defaultoutputfolder +  '/**').split(' '));
     const ts = (<Thread[]>JSON.parse(`${stdout}`));
     log.info('nb message in outbox = ' + ts.length);
     ts.forEach(t => {
@@ -1041,15 +1062,38 @@ export class NotMuchService implements INotMuchService {
           if (transport === undefined) {
             transport = this.transporters.get(Array.from(this.transporters.keys())[0]);
           }
+          let sentfolder = this.sendfolders.get(message.headers.From);
+          if (sentfolder === undefined) {
+            sentfolder = this.sendfolders.get(Array.from(this.sendfolders.keys())[0]);
+          }
+
           transport.sendMail(message1,
             (err) => {
-              if (tmpfiles.length > 0) {
-                this.execPromise('rm -f ' + tmpfiles.join(' ')).then(r => log.info('deleted ' + tmpfiles.join(' ')));
-              }
               if (!err) {
+                /*              if (tmpfiles.length > 0) {
+                                log.info('will delete ' + tmpfiles.join(' '));
+                                this.execPromise('rm -f ' + tmpfiles.join(' ')).then(r => log.info('deleted ' + tmpfiles.join(' ')));
+                              }*/
                 this.addTag(['id:' + message.id], 'deleted');
+                this.draftsendtransporter.sendMail(message,
+                  (err2, info) => {
+                    if (!err2) {
+                      if (tmpfiles.length > 0) {
+                        this.execPromise('rm -f ' + tmpfiles.join(' ')).then(r => log.info('deleted ' + tmpfiles.join(' ')));
+                      }
+                      const tmp = ('' + this.eservice.childProcess.execSync(this.mktemppath + ' ' + this.tmpfilepath)).replace('\n', '');
+                      this.eservice.fs.writeFileSync(tmp, info.message, 'utf8');
+                      this.eservice.childProcess.execSync(this.notmuchpath + ' insert --folder=' + sentfolder + ' -unread -new < ' + '\"' + tmp + '\"');
+                      this.execPromise('rm -f ' + tmp).then(r => log.info('deleted ' + tmp));
+                    } else {
+                      log.error(err2);
+                    }
+                  });
               } else {
                 console.log('Cannot send email (no connexion) ...');
+                if (tmpfiles.length > 0) {
+                  this.execPromise('rm -f ' + tmpfiles.join(' ')).then(r => log.info('deleted ' + tmpfiles.join(' ')));
+                }
               }
 
             });
