@@ -441,13 +441,15 @@ export class NotMuchService implements INotMuchService {
 
       m.forEach(message => {
 
+        message.attachments = [];
 
         const dom = jsel(message);
         if (dom.selectAll('//@content-type').includes('text/html')) {
           dom.selectAll('//@content-disposition').includes('inline');
           const inlines = dom.selectAll('//*[@content-disposition="inline"]');
           message.inlines = [];
-          inlines.forEach(e => {
+          inlines.filter(e =>    e['content-id'] !== undefined ).forEach(e => {
+            console.log(e['content-id']);
             //  notmuch show --part=5  --entire-thread=false --format=raw id:080326cc-9b0c-9824-c2eb-7a4ac3bf48d6@2PE-bretagne.eu | base64 -w 0
             const contentbase64 = '' + this.eservice.childProcess.execSync(this.notmuchpath + ' show --part=' + e.id + ' --entire-thread=false --format=raw \'id:' + message.id + '\' | ' + this.base64path + ' -w 0');
             //          console.log(this.notmuchpath + ' show --part=' + e.id + ' --entire-thread=false --format=raw \'id:' +  message.id + '\' | ' + this.base64path + ' -w 0');
@@ -461,11 +463,17 @@ export class NotMuchService implements INotMuchService {
               content: contentbase64
             });
           });
-
+          inlines.filter(e => e['content-id'] === undefined).forEach(e => {
+            console.log(e['content-id']);
+            message.attachments.push({
+              messageid: message.id,
+              partid: e.id,
+              name: e.filename
+            });
+          });
 
           message.content = this.getHtmlFromMessage(message);
         }
-        message.attachments = [];
         const res = dom.selectAll('//*[@content-disposition="attachment"]');
         res.forEach(e => {
           message.attachments.push({
