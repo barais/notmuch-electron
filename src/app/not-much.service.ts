@@ -463,8 +463,8 @@ export class NotMuchService implements INotMuchService {
               content: contentbase64
             });
           });
-          inlines.filter(e => e['content-id'] === undefined).forEach(e => {
-            console.log(e['content-id']);
+          inlines.filter(e => e['content-id'] === undefined && e['filename'] !== undefined).forEach(e => {
+            console.log(e);
             message.attachments.push({
               messageid: message.id,
               partid: e.id,
