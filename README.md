@@ -52,19 +52,20 @@ To apply some rules on incoming messages, I use [afew](https://github.com/afewma
 
 To get push, notifications when new email arrive, I use a personal version of [node-imapnotify](https://github.com/barais/node-imapnotify) based on the initial version of [node-imapnotify](https://github.com/a-sk/node-imapnotify/).
 
-This projet is an initial version of a mail user agent on top of notmuch.
+This projet is an initial version of a mail user agent on top of notmuch to coordinate these tools.
 
 ## Features
 
-- Reading email from several imap services ([mbsync](http://isync.sourceforge.net/mbsync.html))
+- Reading email from several imap services (based on [mbsync](http://isync.sourceforge.net/mbsync.html))
 - Composing new email
-- Mail address completion
-- Replying, Forwarding, editing as new emails
-- Fast mail query ([notmuch](https://notmuchmail.org/))
+- Mail address completion based on mail history (ldap integration will arrive soon)
+- Replying, Forwarding email
+- editing as new email
+- Fast mail query (thanks to [notmuch](https://notmuchmail.org/))
 - Notmuch query completion
 - ics event creation from email
 - [Rememberthemilk](https://www.rememberthemilk.com/) task creation from email
-- Email spell check with language detection (using ctrl + UP to automaically detect the language)
+- Email spell check with language detection (using ctrl + TAB to automatically detect the language)
 - Customisable keyboard shortcuts (for shortcut to common queries)
 - Customisable email text shortcut (useful for greeting formulas)
 - Outbox folder management to send email when network connection is up
