@@ -1,10 +1,14 @@
 
 To check
 [X] Overlay nom de fichier
-
+[X] imap idle 
 
 
 Todo
+[] imap idle  test
+[] Bug attachment from mac
+[] Close all tab
+
 [] Reply vers Reply all.
 [] MID
 [] Use monaco instead of quill

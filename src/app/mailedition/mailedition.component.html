@@ -1,0 +1,150 @@
+<div class="p-grid p-dir-col">
+  <div class="p-col">
+
+<div style="padding: 0em;border-bottom: 1px solid #d9d9d9">
+  <div class="ui-g-12 ui-md-7" style="text-align:left">
+    <b>Compose email</b>
+  </div>
+  <div class="ui-g-12 ui-md-4" style="text-align:right;">
+    <button pButton type="button" class="ui-button-success" label="Cancel" (click)="cancelMail()"></button>
+    <button pButton type="button" class="ui-button-success" label="Save as draft" (click)="saveAsDraft()"></button>
+    <button pButton type="button" class="ui-button-success" label="Send" (click)="sendMail()"></button>
+  </div>
+</div>
+</div>
+<div class="p-col">
+<div class="ui-g ui-fluid">
+    <div class="ui-g-12 ui-md-12 ui-fluid">
+      <div class="p-grid p-dir-col ui-fluid">
+        <div class="p-col">
+          <div class="box">
+            <div *ngIf="froms.length === 1" class="ui-inputgroup ui-fluid">
+              <span class="ui-inputgroup-addon"><i class="fa fa-user"></i></span>
+              <input type="text" pInputText placeholder="From" [(ngModel)]="mailEdition.from" [readOnly]="true">
+            </div>
+            <div *ngIf="froms.length > 1" class="ui-inputgroup ui-fluid">
+              <span class="ui-inputgroup-addon"><i class="fa fa-user"></i></span>
+              <p-dropdown class="ui-fluid" [options]="froms" [(ngModel)]="mailEdition.from"></p-dropdown>
+            </div>
+          </div>
+        </div>
+        <div class="p-col ui-fluid">
+          <div class="box">
+            <div class="ui-inputgroup">
+              <span class="ui-inputgroup-addon"><i class="fa fa-user"></i></span>
+              <p-autoComplete #to [(ngModel)]="mailEdition.tos" placeholder="To" [suggestions]="mailEdition.resultsto"
+                (completeMethod)="searchto($event)" tyleClass="wid100" [minLength]="3" [multiple]="true" [delay]="400"
+                showTransitionOptions="20ms ease-out">
+              </p-autoComplete>
+            </div>
+          </div>
+        </div>
+        <div class="p-col">
+          <div class="box">
+            <div class="ui-inputgroup">
+              <span class="ui-inputgroup-addon"><i class="fa fa-user"></i></span>
+              <p-autoComplete #cc [(ngModel)]="mailEdition.ccs" placeholder="Cc" [suggestions]="mailEdition.resultscc"
+                (completeMethod)="searchcc($event)" tyleClass="wid100" [minLength]="3" [multiple]="true"
+                [delay]="400">
+              </p-autoComplete>
+            </div>
+          </div>
+        </div>
+        <div class="p-col">
+          <div class="box">
+            <div class="ui-inputgroup">
+              <span class="ui-inputgroup-addon"><i class="fa fa-user"></i></span>
+              <p-autoComplete #bcc [(ngModel)]="mailEdition.bccs" placeholder="bcc" [suggestions]="mailEdition.resultsbcc"
+                (completeMethod)="searchbcc($event)" tyleClass="wid100" [minLength]="3" [multiple]="true"
+                [delay]="400">
+              </p-autoComplete>
+            </div>
+          </div>
+        </div>
+        <div class="p-col">
+          <div class="box">
+            <div class="ui-inputgroup">
+              <span class="ui-inputgroup-addon"><i class="far fa-envelope"></i></span>
+              <input type="text" [(ngModel)]="mailEdition.subject" pInputText placeholder="Subject">
+            </div>
+          </div>
+        </div>
+        <div class="ng-fluid p-col">
+          <div class="ng-fluid box">
+            <p-editor #editor class="ng-fluid" [(ngModel)]="mailEdition.mailbody" [style]="{'min-height':'100px'}"
+              [formats]="['background','bold', 'color', 'font', 'code', 'italic', 'link', 'size', 'strike', 'script', 'underline', 'blockquote', 'header', 'indent', 'list', 'align', 'direction', 'code-block', 'image', 'video']">
+              <p-header>
+                <span class="ql-formats">
+                  <span class="ql-formats">
+                    <select class="ql-font"></select>
+                    <select class="ql-size"></select>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-bold"></button>
+                    <button class="ql-italic"></button>
+                    <button class="ql-underline"></button>
+                    <button class="ql-strike"></button>
+                  </span>
+                  <span class="ql-formats">
+                    <select class="ql-color"></select>
+                    <select class="ql-background"></select>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-script" value="sub"></button>
+                    <button class="ql-script" value="super"></button>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-header" value="1"></button>
+                    <button class="ql-header" value="2"></button>
+                    <button class="ql-blockquote"></button>
+                    <button class="ql-code-block"></button>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-list" value="ordered"></button>
+                    <button class="ql-list" value="bullet"></button>
+                    <button class="ql-indent" value="-1"></button>
+                    <button class="ql-indent" value="+1"></button>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-direction" value="rtl"></button>
+                    <select class="ql-align"></select>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-link"></button>
+                    <button class="ql-image"></button>
+                    <button class="ql-video"></button>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-clean"></button>
+                  </span>
+                </span>
+              </p-header>
+
+            </p-editor>
+          </div>
+        </div>
+        <div class="p-col">
+          <div class="box">
+            <p-fileUpload #upload name="demo[]" customUpload="true" (uploadHandler)="myUploader($event, upload)"
+              [showUploadButton]=false [showCancelButton]=false [auto]=true multiple="multiple"
+              maxFileSize="10000000">
+              <ng-template let-file pTemplate="file">
+
+              </ng-template>
+              <ng-template pTemplate="content">
+                <ul *ngIf="mailEdition.uploadedFiles.length">
+                  <li *ngFor="let file of mailEdition.uploadedFiles">{{file.name}} - {{file.size}} bytes<p-button
+                      icon="fas fa-trash" (click)="deleteAttachement(file)"></p-button>
+                  </li>
+                </ul>
+              </ng-template>
+            </p-fileUpload>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+  <!--</p-dialog>-->

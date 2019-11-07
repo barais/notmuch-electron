@@ -16,7 +16,7 @@ import * as $ from 'jquery';
 import { Observable } from 'rxjs';
 import { from } from 'rxjs';
 // tslint:disable:max-line-length
-
+import {imap} from 'imap';
 
 
 
@@ -54,10 +54,21 @@ export class NotMuchService implements INotMuchService {
   defaultquery: string;
 
   nodemailer;
+  ICAL;
+  imap1;
+  mailbox = "INBOX";
+  refresh: () => any;
+
+  user: string;
+  password: string;
+  host: string;
+  port: Number;
+  tls: boolean;
 
   constructor(private eservice: ElectronService, private sanitizer: DomSanitizer, private rtmservice: RtmService) {
     if (this.isElectron()) {
       this.nodemailer = window.require('nodemailer');
+      this.ICAL = window.require('ical.js');
     }
     this.draftsendtransporter = this.nodemailer.createTransport({
       streamTransport: true,
@@ -81,6 +92,15 @@ export class NotMuchService implements INotMuchService {
         'signature': '',
         'sentfolder': 'Sent',
         'draftfolder': 'Drafts'
+      }
+      ],
+      'imapaccounts': [{
+        'name': 'inria',
+        user: 'test',
+        password: 'test',
+        host: 'zimbra.inria.fr',
+        port: 993,
+        tls: true,
       }
       ],
       'defaultoutputfolder': 'Outbox',
@@ -125,6 +145,16 @@ export class NotMuchService implements INotMuchService {
       this.draftfolders.set(smtp.from, smtp.draftfolder);
       this.sendfolders.set(smtp.from, smtp.sentfolder);
     });
+    //TODO Manage multiaccount
+    this.data.imapaccounts.forEach(ima => {
+      this.user = ima.user;
+      this.password = '' + this.eservice.childProcess.execSync(ima.password);
+      this.host = ima.host;
+      this.port = ima.port;
+      this.tls = ima.tls;
+
+    });
+    console.log(this.password);
     if (this.data.notmuchpath != null) {
       this.notmuchpath = this.data.notmuchpath;
     } else {
@@ -333,6 +363,8 @@ export class NotMuchService implements INotMuchService {
     // });
     // return promise1;
   }
+
+
 
 
 
@@ -709,7 +741,6 @@ export class NotMuchService implements INotMuchService {
   }
 
   saveAttachmentContent(messageid, attachmentid, dest): Promise<string> {
-    console.log(dest.replace(/ /g , '\ ' ));
     return this.execPromise(this.notmuchpath + ' show --format=raw --entire-thread=false --part=' + attachmentid + ' \'id:' + messageid + '\' > ' + dest.replace(/ /g , '\\ ' ));
   }
 
@@ -923,6 +954,7 @@ export class NotMuchService implements INotMuchService {
   getHtmlFromMessage(message: Mail): string {
     const dom = jsel(message);
     const html = dom.select('//*[@content-type="text/html"]/@content');
+    const calendar = dom.select('//*[@content-type="text/calendar"]/@content');
     const root = $($.parseHTML(html));
     root.find('img').each((index, img) => {
       if (img.src.startsWith('cid:')) {
@@ -938,6 +970,22 @@ export class NotMuchService implements INotMuchService {
     });
     let res = $('<div></div>').append(root.clone()).html();
     res = this.sanitizer.sanitize(SecurityContext.HTML, res);
+
+    if (calendar != null) {
+      const jcalData = this.ICAL.parse(calendar);
+      const comp = new this.ICAL.Component(jcalData);
+      const vevent = comp.getFirstSubcomponent('vevent');
+      const summary = vevent.getFirstPropertyValue('summary');
+      const dtstart = vevent.getFirstPropertyValue('dtstart');
+      const dtend = vevent.getFirstPropertyValue('dtend');
+      const organizer = vevent.getFirstPropertyValue('organizer');
+      res = res + '<BR><b>summary</b>: ' + summary + '<BR><b>start</b>: ' + dtstart +
+      '<BR><b>end</b>: ' + dtend +
+      '<BR><b>organizer</b>: ' + organizer;
+      res = res + '<BR><BR>' + calendar;
+
+    }
+
     //    res = this.sanitizer.sanitize(SecurityContext.SCRIPT, res);
     //    res = this.sanitizer.sanitize(SecurityContext.STYLE, res);
     return res;
@@ -1173,6 +1221,59 @@ END:VCALENDAR`;
   }
   isElectron = () => {
     return window && window.process && window.process.type;
+  }
+
+  initIdle(refresh1: () => any) {
+    this.imap1 = new imap({
+      user: this.user,
+      password: this.password,
+      host: this.host,
+      port: this.port,
+      tls: this.tls,
+      connTimeout: 10000,
+      authTimeout: 10000,
+      debug: null,
+      tlsOptions: {}
+    });
+    this.refresh = refresh1;
+
+    this.imap1.once('ready', this.imapReady.bind(this));
+    this.imap1.once('close', this.imapClose.bind(this));
+    this.imap1.on('error', this.imapError.bind(this));
+
+  }
+
+  start() {
+    this.imap1.connect();
+  }
+
+  stop() {
+    this.imap1.disconnect();
+  }
+
+  imapReady() {
+    this.imap1.openBox(this.mailbox, false, (error, mailbox) => {
+      if (error) {
+        this.imapError(error);
+      } else {
+        const listener = this.imapMail.bind(this);
+        this.imap1.on('mail', listener);
+        this.imap1.on('update', listener);
+      }
+    });
+  }
+
+  imapClose() {
+
+  }
+
+  imapError(error) {
+
+  }
+
+  imapMail() {
+    console.log('new mail')
+    this.refresh();
   }
 
 }

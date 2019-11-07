@@ -1,0 +1,142 @@
+  <div class="p-grid p-dir-col">
+    <div class="p-col">
+      <div style="padding: 0em;border-bottom: 0px solid #d9d9d9">
+        <div class="ui-g-12 ui-md-7" style="text-align:left">
+
+        </div>
+        <div class="ui-g-12 ui-md-2" style="text-align:right;">
+          <div class="ui-inputgroup">
+            <span style="padding:2px 0px;border-radius:10px 0px;"> Chronological:</span>
+            <p-inputSwitch (onChange)="handleChangeChronological($event)" [(ngModel)]="chronological"></p-inputSwitch>
+          </div>
+        </div>
+
+        <div class="ui-g-12 ui-md-2" style="text-align:right;">
+          <button pButton type="button" label="Mark as read" (click)="markthreadAsRead(selectedThread)"></button>
+        </div>
+
+      </div>
+
+    </div>
+    <div class="p-col">
+
+      <div class="ui-g">
+        <p-accordion *ngIf="selectedThread" (onOpen)="onTabOpen($event)" (onClose)="onTabOpen($event)"
+          [style]="{'width':'96vw', 'height': '92vh', 'max-height':'92vh' , 'max-width':'98vw'}">
+
+          <ng-template ngFor let-message [ngForOf]="messages" let-i="index">
+
+            <p-accordionTab [selected]="i===0">
+              <p-header>
+                <!-- styleClass="ui-accordion-header-override" [style.backgroundColor]="getColor()"-->
+                <div class="ui-g" style="padding: 0em;border-bottom: 1px solid #d9d9d9">
+                  <div class="ui-g-12 ui-md-8" style="text-align:left">
+                    <b>From</b>: {{message?.headers.From}}<BR>
+                    <b>To</b>: {{message?.headers.To}}<BR>
+                    <span *ngIf="message?.headers?.Cc"><b>Cc</b>: {{message?.headers?.Cc}}<BR></span>
+
+                    <b>Date</b>: {{message?.headers.Date}}<BR>
+
+                    <b>Tags</b>: <span *ngFor="let tag of message?.tags">{{tag }} </span><BR>
+                    <b>Subject</b>: <b>{{message?.headers.Subject}}</b><BR>
+                  </div>
+                  <div class="ui-g-12 ui-md-4" style="text-align:right;">
+                    <button *ngIf="canBeEditAsNew(message)" pButton type="button" class="ui-button-success"
+                      label="Edit as new" (click)="editAsNew($event, message)"></button>
+                    <button pButton type="button" class="ui-button-success" label="Event"
+                      (click)="toICS($event, message)" pTooltip="create an event from this mail"
+                      tooltipPosition="bottom"></button>
+                    <button *ngIf="rtmservice.enableRTM() && !rtmservice.getValidToken()" pButton type="button"
+                      class="ui-button-success" label="Init RTM" (click)="initRememberTheMilk($event)"
+                      pTooltip="Init connection to Remember the milk" tooltipPosition="bottom"></button>
+                    <button *ngIf="rtmservice.enableRTM() && rtmservice.getValidToken()" pButton type="button"
+                      class="ui-button-success" label="Task RTM" (click)="convertTask($event, message)"
+                      pTooltip="Create a task from this mail" tooltipPosition="bottom"></button>
+                    <button pButton type="button" class="ui-button-success" label="reply"
+                      (click)="reply($event, message)"></button>
+                    <button pButton type="button" class="ui-button-success" label="reply all"
+                      (click)="replyAll($event, message)"></button>
+                    <button pButton type="button" class="ui-button-success" label="forward"
+                      (click)="forward($event, message)"></button>
+                    <BR>
+                    <button *ngIf="message?.tags?.includes('unread')" label="Unread" pButton type="button"
+                      class="ui-button-rounded ui-button-danger"></button>
+                    <BR>
+                    <div class="ui-fluid" *ngFor="let attach of message.attachments">
+                      <button style="padding: -1px;border: 2px; overflow: hidden;" pButton type="button"
+                        class="ui-button-raised ui-button-warning" [label]="attach.name"
+                        (click)="showSaveDialog($event, attach.name,attach.messageid, attach.partid)"></button>
+                    </div>
+
+                  </div>
+                </div>
+              </p-header>
+              <!-- [innerHTML]="getHtml(message)"  [style]="{'hyphens': auto, 'width': '100vw', 'height': '100vh', 'max-height':'100vh', 'max-width':'100vw'}" -->
+              <div #mailcontent *ngIf="isHtml(message) else textplain;" [innerHTML]="getHtml(message)">
+                Test
+                <!--message?.body[0].content[1]['content-type'] ==='text/html'"-->
+              </div>
+              <ng-template #textplain>
+                <div
+                  style="white-space: pre-wrap; width: '100vw'; height: '100vh';max-height:'100vh'; max-width:'100vw'">
+                  {{getTextPlain(message)}}
+                </div>
+              </ng-template>
+            </p-accordionTab>
+          </ng-template>
+        </p-accordion>
+      </div>
+      2
+    </div>
+  </div>
+  <!--</p-dialog>-->
+  <p-dialog [focusOnShow]=false [(visible)]="ics" [responsive]="true" showEffect="fade" [modal]="true"
+  [blockScroll]=true [closeOnEscape]=true (onHide)="onIcsHide()" (onShow)="onIcsShow()"
+  [style]="{width: '100vw', height: '100vh', 'max-height':'100vh' , 'max-width':'100vw'}"
+  [contentStyle]="{'width':'100vw',  'height': '100vh', 'max-height':'90vh' , 'max-width':'100vw'}">
+
+  <div class="p-grid p-justify-between">
+    <div class="p-col p-col-align-stretch" style="text-align: center; align-content: center; align-items: center">
+      <h3>Title</h3>
+      <input type="text" pInputText [readOnly]=true [(ngModel)]="icstitre">
+      <BR>
+      <h3>Starting date </h3>
+      <p-calendar [(ngModel)]="icsdate" [inline]="true" [required]=true [locale]="enCalendar" dateFormat="dd/mm/yy">
+      </p-calendar>
+    </div>
+    <div class="p-col p-col-align-stretch" style="text-align: center; align-content: center; align-items: center">
+      <h3>Starting time </h3>
+      <p-calendar [(ngModel)]="icstime" [timeOnly]="true" [inline]="true" [required]=true></p-calendar>
+      <BR>
+      <h3>Duration: {{icsduraction}}</h3>
+      <p-slider [disabled]="icsallday" [(ngModel)]="icsduraction" [step]="15" [min]="15" max="240"></p-slider>
+      <BR>
+      <h3>All day: {{icsallday}}</h3>
+      <p-checkbox [(ngModel)]="icsallday" binary="true"></p-checkbox>
+    </div>
+    <div class="p-col p-col-align-end" style="text-align: right; align-content: right; align-items: right">
+      <button pButton type="button" label="SendICS" (click)="sendICS()"></button>
+    </div>
+  </div>
+</p-dialog>
+
+<p-dialog [focusOnShow]=false [(visible)]="task" [responsive]="true" showEffect="fade" [modal]="true"
+  [blockScroll]=true [closeOnEscape]=true (onHide)="onTaskHide()" (onShow)="onTaskShow()"
+  [style]="{width: '100vw', height: '100vh', 'max-height':'100vh' , 'max-width':'100vw'}"
+  [contentStyle]="{'width':'100vw',  'height': '100vh', 'max-height':'90vh' , 'max-width':'100vw'}">
+  <div class="p-grid p-justify-between">
+    <div class="p-col p-col-align-stretch" style="text-align: left; align-content: left; align-items: left">
+      <h3>Title</h3>
+      <input type="text" pInputText [readOnly]=true [(ngModel)]="tasktitre">
+      <BR>
+      <h3>Due date </h3>
+      <p-calendar [(ngModel)]="taskdate" [inline]="true" [required]=true [locale]="enCalendar"
+        dateFormat="dd/mm/yy">
+      </p-calendar>
+    </div>
+    <div class="p-col p-col-align-end" style="text-align: right; align-content: right; align-items: right">
+      <button pButton type="button" label="Create Task" (click)="createTask()"></button>
+    </div>
+  </div>
+
+</p-dialog>

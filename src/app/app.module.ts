@@ -50,6 +50,9 @@ import {CalendarModule} from 'primeng/calendar';
 import {SliderModule} from 'primeng/slider';
 import {ConfirmDialogModule} from 'primeng/confirmdialog';
 import {ConfirmationService} from 'primeng/api';
+import { AllmailComponent } from './allmail/allmail.component';
+import { MaileditionComponent } from './mailedition/mailedition.component';
+import { ReadthreadComponent } from './readthread/readthread.component';
 
 
 
@@ -63,7 +66,10 @@ export function HttpLoaderFactory(http: HttpClient) {
     AppComponent,
     HomeComponent,
     WebviewDirective,
-    TagfilterPipe
+    TagfilterPipe,
+    AllmailComponent,
+    MaileditionComponent,
+    ReadthreadComponent
   ],
   imports: [
     BrowserModule,

@@ -51,7 +51,6 @@ function createWindow() {
     win.webContents.openDevTools();
   }
 
-
   win.webContents.on('will-navigate', handleRedirect);
   win.webContents.on('new-window', handleRedirect);
   const contextMenu1 = require('electron-context-menu');

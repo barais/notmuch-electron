@@ -82,8 +82,10 @@ First you need to install and configure msmtp, notmuch, mbsync for your account,
 
 See     [Configure mbsync](#configure-mbsync), [Configure msmtp](#configure-msmtp), [Configure notmuch](#configure-notmuch) and [Configure afew](#configure-afew)
 
+Requirement *Notmuch >= 0.26*, afew >= 1.3 
+
 ```bash
-sudo apt-get install msmtp mbsync notmuch notmuch-addrlookup afew gnugpg2 ca-certificates
+sudo apt-get install msmtp isync notmuch notmuch-addrlookup afew gnupg2 ca-certificates
 ```
 
 msmstp is optional, as you can passe the configuration of your smtp server in notmuch-electron config file but msmtp could use password store in your key manager which is a better practise.
